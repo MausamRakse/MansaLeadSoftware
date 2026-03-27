@@ -261,7 +261,7 @@ const App = () => {
     return (
         <div>
             {alert && (
-                <div className={`alert ${alert.type === 'red' ? 'alert-red' : 'alert-yellow'}`}>
+                <div className={`alert ${alert.type === 'red' ? 'alert-red' : alert.type === 'green' ? 'alert-green' : 'alert-yellow'}`}>
                     {alert.message}
                 </div>
             )}
