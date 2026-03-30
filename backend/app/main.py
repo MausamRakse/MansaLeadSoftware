@@ -23,7 +23,7 @@ app = FastAPI(title="Apollo Lead Extraction API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -39,12 +39,6 @@ app.include_router(db_leads.router)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-# Mount frontend directory to /static
-# This handles files like /static/src/App.jsx
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-
-
-@app.get("/")
-def serve_frontend():
-    """Serve the main index.html for the frontend root."""
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+# Mount frontend directory to root
+# This handles files like /src/App.jsx and also serves index.html at /
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
