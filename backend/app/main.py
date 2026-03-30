@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.database import engine
@@ -34,11 +33,14 @@ app.include_router(geo.router)
 app.include_router(export.router)
 app.include_router(db_leads.router)
 
-# Determine the frontend directory (sibling to backend/)
-# Main project root is two levels up from this file
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+# On Render, rootDir=backend so the process CWD is `backend/`.
+# os.getcwd() + "/../frontend" resolves to the repo-root `frontend/` directory.
+# Set the FRONTEND_DIR environment variable to override this for any custom layout.
+_default_frontend = os.path.join(os.getcwd(), "..", "frontend")
+FRONTEND_DIR = os.path.abspath(os.environ.get("FRONTEND_DIR", _default_frontend))
 
-# Mount frontend directory to root
-# This handles files like /src/App.jsx and also serves index.html at /
+logging.getLogger(__name__).info("Serving frontend from: %s", FRONTEND_DIR)
+
+# Mount the frontend directory at root. html=True automatically serves index.html
+# for unknown routes, enabling client-side navigation to work correctly.
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
