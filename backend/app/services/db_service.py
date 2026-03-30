@@ -17,6 +17,8 @@ def save_or_update_lead(db: Session, data: dict) -> Lead:
     if existing_lead:
         # Update existing record
         for key, value in data.items():
+            if key == "id":
+                continue # Skip ID as it is a string hash from Apollo, but an integer in our DB
             if hasattr(existing_lead, key) and value is not None:
                 setattr(existing_lead, key, value)
         logger.info("Updated existing lead: %s", email)
