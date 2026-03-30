@@ -34,11 +34,17 @@ app.include_router(geo.router)
 app.include_router(export.router)
 app.include_router(db_leads.router)
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# Determine the frontend directory (sibling to backend/)
+# Main project root is two levels up from this file
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+# Mount frontend directory to /static
+# This handles files like /static/src/App.jsx
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
 @app.get("/")
 def serve_frontend():
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+    """Serve the main index.html for the frontend root."""
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))

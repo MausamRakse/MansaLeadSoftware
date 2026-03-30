@@ -119,6 +119,11 @@ async def fetch_apollo_leads(filters: dict) -> dict:
                     "phone":         extract_phone(merged),
                     "linkedin_url":  merged.get("linkedin_url", ""),
                     "about_company": about,
+                    "country":       merged.get("country") or org.get("country") or "",
+                    "state":         merged.get("state") or org.get("state") or "",
+                    "city":          merged.get("city") or org.get("city") or "",
+                    "company_size":  str(org.get("estimated_num_employees") or org.get("employee_count") or ""),
+                    "industry":      org.get("industry") or merged.get("industry") or filters.get("industry") or "",
                 })
 
             filtered_leads = [
