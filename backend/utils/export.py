@@ -2,29 +2,32 @@ import csv
 import io
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-import models
+from app.models.lead import Lead
 
-def generate_csv_from_db(db: Session):
+
+def generate_csv_from_db(db: Session) -> StreamingResponse:
     """
-    Queries all leads from the database and returns a StreamingResponse 
-    of the data in CSV format.
+    Queries all leads from the database and returns a StreamingResponse
+    of the data in CSV format, with proper phone number formatting.
     """
-    leads = db.query(models.Lead).all()
-    
-    # Use a generator to yield CSV rows
+    leads = db.query(Lead).all()
+
     def iter_csv():
         output = io.StringIO()
         writer = csv.writer(output)
-        
+
         # Header Row
-        writer.writerow(["Name", "Title", "Company", "Email", "Phone", "About Company", "Industry", "Country", "State", "City", "Company Size"])
+        writer.writerow([
+            "Name", "Title", "Company", "Email", "Phone",
+            "About Company", "Industry", "Country", "State", "City", "Company Size"
+        ])
         yield output.getvalue()
         output.seek(0)
         output.truncate(0)
 
         for lead in leads:
             phone_val = str(lead.phone or "").strip()
-            if phone_val and phone_val != "Not available" and not phone_val.startswith('+'):
+            if phone_val and phone_val != "Not available" and not phone_val.startswith("+"):
                 phone_val = f"+{phone_val}"
 
             writer.writerow([
@@ -38,7 +41,7 @@ def generate_csv_from_db(db: Session):
                 lead.country,
                 lead.state,
                 lead.city,
-                lead.company_size
+                lead.company_size,
             ])
             yield output.getvalue()
             output.seek(0)
@@ -47,5 +50,5 @@ def generate_csv_from_db(db: Session):
     return StreamingResponse(
         iter_csv(),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=leads_export.csv"}
+        headers={"Content-Disposition": "attachment; filename=leads_export.csv"},
     )

@@ -1,7 +1,7 @@
 const { useState, useEffect } = React;
 
 const App = () => {
-    const [mode, setMode] = useState('filter'); // 'filter' or 'ai'
+    const [mode, setMode] = useState('filter');
     const [loading, setLoading] = useState(false);
     const [alert, setAlert] = useState(null);
 
@@ -59,7 +59,7 @@ const App = () => {
         setLoadingStates(true);
         setStateError(null);
         try {
-            const res = await axios.get(`http://127.0.0.1:8000/api/countries/${selectedCountry.iso2}/states`);
+            const res = await apiClient.get(`/api/countries/${selectedCountry.iso2}/states`);
             setStates(res.data.states || []);
         } catch (error) {
             setStateError("Unable to load states. Please try again.");
@@ -83,7 +83,7 @@ const App = () => {
         setLoadingCities(true);
         setCityError(null);
         try {
-            const res = await axios.get(`http://127.0.0.1:8000/api/countries/${selectedCountry.iso2}/states/${selectedStateElement.iso2}/cities`);
+            const res = await apiClient.get(`/api/countries/${selectedCountry.iso2}/states/${selectedStateElement.iso2}/cities`);
             setCities(res.data.cities || []);
         } catch (error) {
             setCityError("Unable to load cities. Please try again.");
@@ -97,7 +97,7 @@ const App = () => {
         setLoadingCountries(true);
         setCountryError(null);
         try {
-            const res = await axios.get('http://127.0.0.1:8000/api/countries');
+            const res = await apiClient.get('/api/countries');
             setCountries(res.data.countries || []);
         } catch (error) {
             setCountryError("Unable to load countries. Please try again.");
@@ -125,7 +125,7 @@ const App = () => {
         setMessage('');
 
         try {
-            const res = await axios.post('http://127.0.0.1:8000/api/leads', {
+            const res = await apiClient.post('/api/leads', {
                 industry,
                 location,
                 state: stateName,
@@ -159,7 +159,7 @@ const App = () => {
         setMessage('');
 
         try {
-            const res = await axios.post('http://127.0.0.1:8000/api/ai-search', { prompt });
+            const res = await apiClient.post('/api/ai-search', { prompt });
             setLeads(res.data.leads || []);
             setCount(res.data.count || 0);
             setFiltersUsed(res.data.filters_used);
@@ -177,15 +177,12 @@ const App = () => {
         }
     };
 
-
-
     const unlockContact = async (index, personId) => {
         if (!personId) {
             showAlert("No Apollo ID found for this contact.", "yellow");
             return;
         }
 
-        // Set specific lead to loading state
         setLeads(currentLeads => {
             const updated = [...currentLeads];
             if (updated[index]) updated[index] = { ...updated[index], unlocking: true };
@@ -193,7 +190,7 @@ const App = () => {
         });
 
         try {
-            const res = await axios.post('http://127.0.0.1:8000/api/enrich-lead', { person_id: personId });
+            const res = await apiClient.post('/api/enrich-lead', { person_id: personId });
             const unlockedData = res.data;
 
             setLeads(currentLeads => {
@@ -223,39 +220,15 @@ const App = () => {
         }
     };
 
-    const handleDownloadCSV = async () => {
-        try {
-            const response = await axios({
-                url: 'http://127.0.0.1:8000/api/download-csv',
-                method: 'GET',
-                responseType: 'blob', // Important for handling binary data
-            });
+    const onExportJSON = () => exportJSON(leads);
 
-            // Create a link to download the file
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'leads_export.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            
-            // Show confirmation popup
+    const onDownloadCSV = async () => {
+        try {
+            await handleDownloadCSV();
             showAlert("Your download is complete", "green");
         } catch (error) {
             showAlert("Failed to download CSV", "red");
         }
-    };
-
-    const exportJSON = () => {
-        if (leads.length === 0) return;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(leads, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "leads.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
     };
 
     return (
@@ -390,11 +363,11 @@ const App = () => {
                     <h2>{count !== null ? `${count} Leads Found` : 'Results'}</h2>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                         {count > 0 && (
-                            <button className="btn-export" onClick={exportJSON}>
+                            <button className="btn-export" onClick={onExportJSON}>
                                 Export JSON
                             </button>
                         )}
-                        <button className="btn-export" onClick={handleDownloadCSV} style={{ background: '#f0fdf4', borderColor: '#16a34a', color: '#166534', fontWeight: 'bold' }}>
+                        <button className="btn-export" onClick={onDownloadCSV} style={{ background: '#f0fdf4', borderColor: '#16a34a', color: '#166534', fontWeight: 'bold' }}>
                             📥 Download DB (CSV)
                         </button>
                     </div>
